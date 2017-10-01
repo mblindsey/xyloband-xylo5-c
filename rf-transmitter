@@ -1,0 +1,161 @@
+#include <SPI.h>
+#include <RH_RF24.h>
+//this isn't working on the xylo5-c and i'm still working on it.
+//also, 99.9% of the code here came from the good folks over at:  http://xylobandhacking.freeforums.net/thread/11/arduino-xyloband-transmitter
+
+//// nSEL on pin 15
+////RH_RF24 rf24(15, D2, D3);
+// LED that blinks when a packet is sent
+#define LEDOUTPUT 6
+// nSEL on pin 10
+RH_RF24 rf24(10);
+
+double mFrequency = 869.475585;
+
+
+#define MAX_BUFFER_LEN      0x3f
+#define STATE_WAIT_LENGTH   0
+#define STATE_BUFFERING     1
+
+
+uint8_t mCurrentState = STATE_WAIT_LENGTH;
+uint8_t mLength = 0;
+uint8_t mBuffer[MAX_BUFFER_LEN];
+uint8_t mBufferPos = 0;
+uint8_t initdone = 1;
+uint8_t command = 0;
+uint8_t wakeupKeepAliveArray[6]={0x00, 0xFF, 0xFF, 0x00, 0x81, 0x02};
+uint8_t sutdown[6]={0x00, 0xFF, 0xFF, 0x00, 0x82, 0x02};
+uint8_t staticRandomColorArray[35]={0x00, 0xFF, 0xFF, 0x76, 0xFF, 0x06, 0x01, 0x20, 0x00, 0x00, 0x00, 0xFA, 0x03, 0x01, 0x21, 0x00, 0x10, 0x0A, 0x00, 0xF8, 0xFB, 0xFD, 0xF0, 0xFE, 0xFA, 0xFF, 0xF8, 0xFB, 0xFD, 0xF0, 0xFE, 0xFA, 0xAF, 0x01, 0x43};
+
+
+
+void blinker(){
+  digitalWrite(LEDOUTPUT, HIGH);
+  delay(50);
+  digitalWrite(LEDOUTPUT, LOW);
+}
+
+
+void setup() {
+  Serial.begin(115200);
+  
+  // setup the blinker output
+  pinMode(LEDOUTPUT, OUTPUT);
+  digitalWrite(LEDOUTPUT, LOW);
+    
+  Serial.println("Initializing...");
+  //rf24.printRegisters();
+  // initialize the RF Chip
+  if (!rf24.init()) {
+    Serial.println("init failed");
+    Serial.println("WTF");
+    return;
+  }
+  rf24.setFrequency(mFrequency);
+  Serial.println("Device initialized");
+  Serial.println("Kool Mutha Fockas");
+}
+
+
+
+void loop() {
+
+/* if (command == 0)
+  //{
+    rf24.send_raw(wakeupKeepAliveArray, 6);
+    command = 1;
+    Serial.println("WTF!");
+//rf24.printRegisters();
+   delay(2000);
+
+  //}*/
+
+for (int i=0;i<1000;i++)
+{
+rf24.send_raw(wakeupKeepAliveArray, 6);
+    Serial.println("WTF!");
+    rf24.send_raw(staticRandomColorArray, 35);
+    Serial.println("WTF!!");
+};
+
+delay(100);
+
+rf24.send_raw(staticRandomColorArray, 35);
+  
+/*
+   if (command == 1)
+  {
+    rf24.send_raw(staticRandomColorArray, 35);
+    command = 0;
+    Serial.println("WTF!!");
+rf24.printRegisters();
+    delay(2000);
+  }
+//rf24.printRegisters();
+  /*                           
+  if (Serial.available() > 0) {
+
+    uint8_t c = Serial.read();
+              Serial.println(c, DEC);
+    if (mCurrentState == STATE_WAIT_LENGTH) {
+      // Received length of packet
+      // MSB designates commands, as length can be a max of 0x3f
+
+      if (c & 0x80) {
+        if (c == 0x81) {
+          mFrequency += 0.001; 
+          rf24.setFrequency(mFrequency);
+          Serial.print("Frequency = ");
+          Serial.print(mFrequency, 6);
+          Serial.println(" MHz");
+
+        } else if (c == 0x82) {
+
+          mFrequency -= 0.001; 
+          rf24.setFrequency(mFrequency);
+          Serial.print("Frequency = ");
+          Serial.print(mFrequency, 6);
+          Serial.println(" MHz");
+
+        } else {
+
+          Serial.println("Unknown command");
+
+        }        
+
+      } else if (c <= MAX_BUFFER_LEN) {
+        mLength = c;
+        mCurrentState = STATE_BUFFERING;
+        mBufferPos = 0;
+
+      } else {
+
+        Serial.println("Illegal length byte received");
+
+      }
+
+    } else if (mCurrentState == STATE_BUFFERING) {
+
+      mBuffer[mBufferPos++] = c;
+
+      if (mBufferPos >= mLength) {
+        if(rf24.send_raw(mBuffer, mLength)){
+
+          blinker();
+
+        }else{
+
+          Serial.println("Packet send failed!");
+
+        }
+
+        mCurrentState = STATE_WAIT_LENGTH;
+
+      }
+
+    }
+
+  }*/
+
+}
